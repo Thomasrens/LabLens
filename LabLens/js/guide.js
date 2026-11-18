@@ -1,0 +1,13 @@
+/* Equipment guide rendering, hotspot placement and acknowledged safety gates. */
+let equipment=null,index=0,onComplete=()=>{};
+export function beginGuide(item,complete){equipment=item;index=0;onComplete=complete;render();}
+function render(){if(!equipment)return;const step=equipment.steps[index],total=equipment.steps.length;document.getElementById('guideEquipmentName').textContent=equipment.name;document.getElementById('guideStepLabel').textContent=`Step ${index+1} of ${total}`;document.getElementById('stepNumber').textContent=String(index+1).padStart(2,'0');document.getElementById('stepTitle').textContent=step.title;document.getElementById('stepText').textContent=step.text;document.getElementById('activePartLabel').textContent=equipment.parts.find(p=>p.id===step.partId)?.label||'General procedure';document.getElementById('ringText').textContent=`${index+1}/${total}`;document.getElementById('stepRing').style.setProperty('--progress',`${((index+1)/total)*100}%`);document.getElementById('previousStep').disabled=index===0;document.getElementById('nextStep').innerHTML=index===total-1?'Finish guide <svg><use href="assets/icons.svg#check"/></svg>':'Next step <svg><use href="assets/icons.svg#arrow-right"/></svg>';
+  const warning=document.getElementById('stepWarning'),ack=document.getElementById('safetyAck');warning.classList.toggle('hidden',!step.warning);ack.checked=false;document.getElementById('warningText').textContent=step.warning||'';document.getElementById('nextStep').disabled=!!step.warning;
+  const scale=document.getElementById('instrumentScale');scale.innerHTML='';for(let i=0;i<total;i++){const tick=document.createElement('span');tick.className=i<index?'filled':i===index?'active':'';scale.append(tick);}
+  const layer=document.getElementById('hotspotLayer');layer.innerHTML='';equipment.parts.forEach((part,i)=>{const group=document.createElementNS('http://www.w3.org/2000/svg','g');group.setAttribute('transform',`translate(${part.x} ${part.y})`);group.setAttribute('class',`hotspot ${part.id===step.partId?'active':''}`);const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('r','3.4');const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.setAttribute('x','4.5');label.setAttribute('y','1');label.textContent=part.label;group.append(circle,label);layer.append(group);});
+}
+export function acknowledgeSafety(){document.getElementById('nextStep').disabled=false;}
+export function nextStep(){if(!equipment)return;if(index<equipment.steps.length-1){index++;render();}else onComplete();}
+export function previousStep(){if(index>0){index--;render();}}
+export function getGuideEquipment(){return equipment;}
+export function resetGuide(){index=0;render();}
